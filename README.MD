@@ -1,3 +1,8 @@
+# Fork
+
+This fork is intended to run with IDA 7.7 and process Windows Phone 8.1 kernel drivers.  
+Do not expect to use all features of the original [DriverBuddyReloaded](https://github.com/VoidSec/DriverBuddyReloaded)
+
 # Driver Buddy Reloaded Quickstart
 
 ## Table of Contents
