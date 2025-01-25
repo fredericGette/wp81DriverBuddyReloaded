@@ -246,5 +246,7 @@ def is_driver():
                 return func_addr
             elif func_name == "DriverEntry_0":
                 return func_addr
+            elif func_name == "start":
+                return func_addr                                      
     return False
 

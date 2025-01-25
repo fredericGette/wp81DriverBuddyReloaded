@@ -2,6 +2,7 @@ import os
 
 import idaapi
 import idc
+import ida_bytes                
 from DriverBuddyReloaded import NTSTATUS
 from DriverBuddyReloaded import device_name_finder
 from DriverBuddyReloaded import dump_pool_tags
@@ -211,12 +212,19 @@ def find_all_ioctls():
         # print("Block: {} - {}".format(start, end))
         for instr in range(start, end):
             # if the penultimate instruction is cmp or sub or mov against an immediate value
-            if idc.print_insn_mnem(instr) in ['cmp', 'sub', 'mov'] and idc.get_operand_type(instr, 1) == 5:
-                value = get_operand_value(instr)
-                # value >= 0x10000 (lower false positives) and is not a known NTSTATUS value; check issue #15
-                if value >= 0x10000 and value not in NTSTATUS.ntstatus_values:
-                    ioctls.append((instr, value))
-                    ioctl_tracker.add_ioctl(instr, value)
+            if idc.print_insn_mnem(instr) in ['cmp', 'sub', 'mov', 'LDR.W']:
+                # print("[FG] instr={}".format(idc.print_insn_mnem(instr)));
+                # print("[FG] 2nd operandType={}".format(idc.get_operand_type(instr, 1)));
+                if idc.get_operand_type(instr, 1) == 5 or idc.get_operand_type(instr, 1) == 2:       
+                    value = get_operand_value(instr)
+                    if idc.get_operand_type(instr, 1) == 2: 
+                        # print("[FG] Direct Memory Reference (DATA)");
+                        value = ida_bytes.get_dword(value)
+                    # print("[FG] value={}".format(value));
+                    # value >= 0x10000 (lower false positives) and is not a known NTSTATUS value; check issue #15
+                    if value >= 0x10000 and value not in NTSTATUS.ntstatus_values:
+                        ioctls.append((instr, value))
+                        ioctl_tracker.add_ioctl(instr, value)
     return ioctls
 
 
@@ -479,8 +487,6 @@ class DriverBuddyPlugin(idaapi.plugin_t):
                 log_file.write("[+] Analysis Completed!\n"
                                "-----------------------------------------------")
             print("\n[>] Saved Autoanalysis log file to \"{}{}\"".format(path, analysis_file_name))
-            if pool:
-                print("[>] Saved Pooltags file to \"{}{}\"".format(path, pool_file_name))
         except IOError as e:
             print("ERROR #{}: {}\nAutoanalysis aborted, can't write log file to \"{}{}\"".format(e.errno, e.strerror,
                                                                                                  path,
