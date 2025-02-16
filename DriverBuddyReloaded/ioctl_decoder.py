@@ -202,44 +202,50 @@ def find_ioctls_dumb(log_file, ioctl_file_name):
         if cur == idc.BADADDR:
             break
         else:
-            if idc.get_operand_type(cur, 0) == 5:
+            if idc.get_operand_type(cur, 0) == 5: #Immediate Value
                 idc.op_dec(cur, 0)
-                ioctl_code = int(idc.print_operand(cur, 0))
-                function = get_function(ioctl_code)
-                device_name, device_code = get_ioctl_code(ioctl_code)
-                method_name, method_code = get_method(ioctl_code)
-                access_name, access_code = get_access(ioctl_code)
-                all_vars = (
-                    cur, ioctl_code, device_name, device_code, function, method_name, method_code, access_name,
-                    access_code)
                 try:
-                    with open(ioctl_file_name, "a") as IOCTL_file:
-                        IOCTL_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
-                except IOError as e:
-                    print("ERROR #{}: {}\nCan't save decoded IOCTLs to \"{}\"".format(e.errno, e.strerror,
-                                                                                      ioctl_file_name))
-                print("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)" % all_vars)
-                log_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
-                result = True
-            elif idc.get_operand_type(cur, 1) == 5:
+                    ioctl_code = int(idc.print_operand(cur, 0))
+                    function = get_function(ioctl_code)
+                    device_name, device_code = get_ioctl_code(ioctl_code)
+                    method_name, method_code = get_method(ioctl_code)
+                    access_name, access_code = get_access(ioctl_code)
+                    all_vars = (
+                        cur, ioctl_code, device_name, device_code, function, method_name, method_code, access_name,
+                        access_code)
+                    try:
+                        with open(ioctl_file_name, "a") as IOCTL_file:
+                            IOCTL_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
+                    except IOError as e:
+                        print("ERROR #{}: {}\nCan't save decoded IOCTLs to \"{}\"".format(e.errno, e.strerror,
+                                                                                          ioctl_file_name))
+                    print("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)" % all_vars)
+                    log_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
+                    result = True
+                except ValueError:
+                    print("WARNING : Can't convert {} to int".format(idc.print_operand(cur, 0)))    
+            elif idc.get_operand_type(cur, 1) == 5: #Immediate Value
                 idc.op_dec(cur, 1)
-                ioctl_code = int(idc.print_operand(cur, 1))
-                function = get_function(ioctl_code)
-                device_name, device_code = get_ioctl_code(ioctl_code)
-                method_name, method_code = get_method(ioctl_code)
-                access_name, access_code = get_access(ioctl_code)
-                all_vars = (
-                    cur, ioctl_code, device_name, device_code, function, method_name, method_code, access_name,
-                    access_code)
                 try:
-                    with open(ioctl_file_name, "a") as IOCTL_file:
-                        IOCTL_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
-                except IOError as e:
-                    print("ERROR #{}: {}\nCan't save decoded IOCTLs to \"{}\"".format(e.errno, e.strerror,
-                                                                                      ioctl_file_name))
-                print("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)" % all_vars)
-                log_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
-                result = True
+                    ioctl_code = int(idc.print_operand(cur, 1))
+                    function = get_function(ioctl_code)
+                    device_name, device_code = get_ioctl_code(ioctl_code)
+                    method_name, method_code = get_method(ioctl_code)
+                    access_name, access_code = get_access(ioctl_code)
+                    all_vars = (
+                        cur, ioctl_code, device_name, device_code, function, method_name, method_code, access_name,
+                        access_code)
+                    try:
+                        with open(ioctl_file_name, "a") as IOCTL_file:
+                            IOCTL_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
+                    except IOError as e:
+                        print("ERROR #{}: {}\nCan't save decoded IOCTLs to \"{}\"".format(e.errno, e.strerror,
+                                                                                          ioctl_file_name))
+                    print("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)" % all_vars)
+                    log_file.write("0x%-16x : 0x%-8X | %-31s 0x%-8X | 0x%-8X | %-17s %-4d | %s (%d)\n" % all_vars)
+                    result = True
+                except ValueError:
+                    print("WARNING : Can't convert {} to int".format(idc.print_operand(cur, 1)))
             # else:
             # print("[!] Cannot get IOCTL from {} at {} ".format(idc.GetDisasm(cur), hex(cur)))
         cur = idc.next_head(cur)
