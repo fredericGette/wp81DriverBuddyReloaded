@@ -1,7 +1,7 @@
 import ida_bytes
 import idaapi
 import idc
-import idautils               
+import idautils
 
 from collections import namedtuple
 
@@ -83,7 +83,8 @@ def populate_wdf():
     Find and define WDF driver's structures
     :return:
     """
-    # print("[FG] begin populate_wdf")                                      
+    
+    # print("[FG] begin populate_wdf")
 
     # globals auto switch based on driver's architecture dependent globals
     is64 = idaapi.get_inf_structure().is_64bit()
@@ -95,44 +96,42 @@ def populate_wdf():
         ptr_size = 4
     # find data sections    
     for segStartEa in idautils.Segments():
-        # print("[FG] segStartEa={}".format(segStartEa))
+        # print(f"[FG] segStartEa={hex(segStartEa)}")
         mySegment = idaapi.getseg(segStartEa)
         # print("[FG] mySegment={}".format(mySegment))
         mySegmentName = idc.get_segm_name(segStartEa)
-        # print("[FG] mySegmentName={}".format(mySegmentName))
-        if mySegmentName.lower() == '.data' or mySegmentName.lower() == '.rdata' or mySegmentName.lower() == 'nonpage':
-            # print("[FG] found data section")
-            segm = mySegment
-            # print("[FG] segm={}".format(segm))
-            if segm is None:
-                continue
-            # print("[FG] segm.start_ea={} segm.end_ea={}".format(segm.start_ea, segm.end_ea))
-            if segm.start_ea != idc.BADADDR and segm.end_ea != idc.BADADDR:
-                # search `mdfLibrary` unicode string in .rdata section
-                binpat = idaapi.compiled_binpat_vec_t()
-                ida_bytes.parse_binpat_str(binpat, 0, 'L"mdfLibrary"', 16)
-                idx = ida_bytes.bin_search(segm.start_ea, segm.end_ea, binpat, ida_bytes.BIN_SEARCH_NOCASE)
-                # print("[FG] idx={} idaapi.BADADDR={}".format(idx, idaapi.BADADDR))
-                if idx != idaapi.BADADDR:
-                    actual_library = chr(ida_bytes.get_byte(idx-2)) + "mdfLibrary"
-                    log(("Found %s string at 0x%x") % (actual_library, idx - 2))
-                    addr = idc.get_first_dref_to(idx - 2)
-                    version = VersionInfo(
-                        library=actual_library,
-                        major=idc.get_wide_dword(addr + ptr_size + MAJOR_VERSION_OFFSET),
-                        minor=idc.get_wide_dword(addr + ptr_size + MINOR_VERSION_OFFSET)
-                    )
-                    id = add_struct(version)
-                    if id != -1:
-                        wdf_func = get_ptr(addr + ptr_size + WDF_FUNCTIONS_OFFSET)
-                        size = idc.get_struc_size(id)
-                        log('doStruct (size=' + hex(size) + ') at ' + hex(wdf_func))
-                        #ida_bytes.del_items(wdf_func, 0, size)
-                        
-                        if idc.set_name(wdf_func, 'WdfFunctions_%s__%d_%d' % version, 0):
-                            if ida_bytes.create_struct(wdf_func, size, id, True) != 0:
-                                log('Success')
-                            else:
-                                log('create_struct failure')
+        # print(f"[FG] mySegmentName={mySegmentName}")
+        segm = mySegment
+        # print("[FG] segm={}".format(segm))
+        if segm is None:
+            continue
+        # print(f"[FG] segm.start_ea={hex(segm.start_ea)} segm.end_ea={hex(segm.end_ea)}")
+        if segm.start_ea != idc.BADADDR and segm.end_ea != idc.BADADDR:
+            # search `mdfLibrary` unicode string in .rdata section
+            binpat = idaapi.compiled_binpat_vec_t()
+            ida_bytes.parse_binpat_str(binpat, 0, 'L"mdfLibrary"', 16)
+            idx = ida_bytes.bin_search(segm.start_ea, segm.end_ea, binpat, ida_bytes.BIN_SEARCH_NOCASE)
+            # print(f"[FG] idx={hex(idx)} idaapi.BADADDR={hex(idaapi.BADADDR)}")
+            if idx != idaapi.BADADDR:
+                actual_library = chr(ida_bytes.get_byte(idx-2)) + "mdfLibrary"
+                log(("Found %s string at 0x%x") % (actual_library, idx - 2))
+                addr = idc.get_first_dref_to(idx - 2)
+                version = VersionInfo(
+                    library=actual_library,
+                    major=idc.get_wide_dword(addr + ptr_size + MAJOR_VERSION_OFFSET),
+                    minor=idc.get_wide_dword(addr + ptr_size + MINOR_VERSION_OFFSET)
+                )
+                id = add_struct(version)
+                if id != -1:
+                    wdf_func = get_ptr(addr + ptr_size + WDF_FUNCTIONS_OFFSET)
+                    size = idc.get_struc_size(id)
+                    log('doStruct (size=' + hex(size) + ') at ' + hex(wdf_func))
+                    #ida_bytes.del_items(wdf_func, 0, size)
+                    
+                    if idc.set_name(wdf_func, 'WdfFunctions_%s__%d_%d' % version, 0):
+                        if ida_bytes.create_struct(wdf_func, size, id, True) != 0:
+                            log('Success')
                         else:
-                            log('set_name failure')
+                            log('create_struct failure')
+                    else:
+                        log('set_name failure')
